@@ -10,9 +10,9 @@ byte ssPins[] = {8, 10};
 RfidHandler rfids(RST_PIN, NUMBER_OF_RFID, ssPins);
 
 #define NUMBER_OF_PRESENCE 2   
-byte pPins[] = {0, 7};
+byte pPins[] = {3, 7};
 
-PCF8574Handler presence(NUMBER_OF_PRESENCE, pPins);
+PCF8574Handler presence(0x20, NUMBER_OF_PRESENCE, pPins);
 
 WIEGAND wg;
 

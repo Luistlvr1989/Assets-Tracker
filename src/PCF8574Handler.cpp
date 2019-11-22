@@ -1,10 +1,10 @@
 #include "PCF8574Handler.h"
 
-PCF8574Handler::PCF8574Handler(int numberOfPins, byte pins[]) {
+PCF8574Handler::PCF8574Handler(uint8_t address, int numberOfPins, byte pins[]) {
     this->numberOfPins = numberOfPins;
     this->pins = pins;
     this->old = new uint8_t[this->numberOfPins];
-    this->pcf8574 = new PCF8574_I2C(0x38);
+    this->pcf8574 = new PCF8574_I2C(address);
 }
 
 void PCF8574Handler::begin() {
