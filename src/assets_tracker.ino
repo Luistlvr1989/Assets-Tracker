@@ -4,15 +4,15 @@
 #include "PCF8574Handler.h"
 
 #define RST_PIN 9    
-#define NUMBER_OF_RFID 2      
-byte ssPins[] = {8, 10};
+#define NUMBER_OF_RFID 3      
+byte ssPins[] = {8, 10, 7};
 
 RfidHandler rfids(RST_PIN, NUMBER_OF_RFID, ssPins);
 
-#define NUMBER_OF_PRESENCE 2   
-byte pPins[] = {3, 7};
+#define NUMBER_OF_PRESENCE 2
+byte pPins[] = {0, 7};
 
-PCF8574Handler presence(0x20, NUMBER_OF_PRESENCE, pPins);
+PCF8574Handler presence(0x38, NUMBER_OF_PRESENCE, pPins);
 
 WIEGAND wg;
 
@@ -38,7 +38,7 @@ void loop() {
         sendJson(doc);
     }
 
-    hasResult = presence.readAll(result);
+    boolean hasResult = presence.readAll(result);
     if (hasResult) {
         StaticJsonDocument<256> doc = buildJson("presence", result.first, result.second);
         sendJson(doc);
