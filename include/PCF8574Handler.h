@@ -4,8 +4,6 @@
 #include "PCF8574_i2c.h"
 #include <Pair.h>
 
-//PCF8574_I2C pcf8574(0x38);
-
 class PCF8574Handler {
     int numberOfPins;
     byte *pins;
@@ -13,7 +11,7 @@ class PCF8574Handler {
     PCF8574_I2C *pcf8574;
 
 public:
-    PCF8574Handler(int numberOfPins, byte pins[]);
+    PCF8574Handler(uint8_t address, int numberOfPins, byte pins[]);
 
     void begin();
 
