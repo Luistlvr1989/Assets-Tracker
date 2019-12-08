@@ -2,12 +2,13 @@
 #include <Wiegand.h>
 #include "RfidHandler.h"
 #include "PCF8574Handler.h"
+  
+#define BZZ_PIN 4
 
-#define RST_PIN 9    
-#define NUMBER_OF_RFID 3      
-byte ssPins[] = {8, 10, 7};
+#define NUMBER_OF_RFID 1  
+byte ssPins[] = {8};
 
-RfidHandler rfids(RST_PIN, NUMBER_OF_RFID, ssPins);
+RfidHandler rfids(NUMBER_OF_RFID, ssPins);
 
 #define NUMBER_OF_PRESENCE 2
 byte pPins[] = {0, 7};
@@ -16,6 +17,7 @@ PCF8574Handler presence(0x38, NUMBER_OF_PRESENCE, pPins);
 
 WIEGAND wg;
 
+void handleActions();
 StaticJsonDocument<256> buildJson(String, String, String);
 StaticJsonDocument<256> buildJson(String, String, int);
 void sendJson(StaticJsonDocument<256> document);
@@ -27,6 +29,7 @@ void setup() {
     rfids.begin();
     presence.begin();
     wg.begin();
+    pinMode(BZZ_PIN, OUTPUT);
 }
 
 void loop() {
@@ -38,7 +41,7 @@ void loop() {
         sendJson(doc);
     }
 
-    boolean hasResult = presence.readAll(result);
+    hasResult = presence.readAll(result);
     if (hasResult) {
         StaticJsonDocument<256> doc = buildJson("presence", result.first, result.second);
         sendJson(doc);
@@ -49,6 +52,20 @@ void loop() {
         StaticJsonDocument<256> doc = buildJson("employee", "code", code);
         sendJson(doc);
     }
+
+    handleActions();
+}
+
+void handleActions() {
+  if (Serial.available() > 0) {
+    String command = Serial.readString();
+    command.trim();
+    if (command == "1") {
+      digitalWrite(BZZ_PIN, HIGH);
+    } else {
+      digitalWrite(BZZ_PIN, LOW);
+    }
+  }
 }
 
 StaticJsonDocument<256> buildJson(String sensor, String pin, String value) {

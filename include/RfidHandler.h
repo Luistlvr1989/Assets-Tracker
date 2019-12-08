@@ -2,25 +2,28 @@
 #define RFID_HANDLER_H
 
 #include <SPI.h>
-#include <MFRC522.h>
+#include "rfid1.h"
 #include <Pair.h>
 
 class RfidHandler {
-    int rstPin;
-    int numberOfReaders;
-    byte *ssPins;
-    MFRC522 *mfrc522;
+    RFID1 rfid;
 
-    String bytesToString(byte *buffer, byte bufferSize);
+    byte *ssPins;
+    int numberOfReaders;
+
+    uchar** lastTag;
+    long* lastRead;
+
+    boolean checkRFID(int pin, Pair<String, String> &result);
+
+    bool compareTags(uchar* tag1, uchar* tag2);
 
 public:
-    RfidHandler(int rstPin, int numberOfReaders, byte ssPins[]);
+    RfidHandler(int numberOfReaders, byte ssPins[]);
 
     void begin();
 
     bool readAll(Pair<String, String> &result);
-
-    ~RfidHandler();
 };
 
 #endif

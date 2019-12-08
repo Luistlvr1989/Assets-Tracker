@@ -1,33 +1,22 @@
 #include "RfidHandler.h"
 
-String RfidHandler::bytesToString(byte *buffer, byte bufferSize) {
-    String content = "";
-    
-    for (byte i = 0; i < bufferSize; i++) {
-        content.concat(String(buffer[i] < 0x10 ? " 0" : ""));
-        content.concat(String(buffer[i], HEX));
-    }
-
-    content.toUpperCase();
-    return content;
-}
-
-RfidHandler::RfidHandler(int rstPin, int numberOfReaders, byte ssPins[]) {
-    this->rstPin = rstPin;
+RfidHandler::RfidHandler(int numberOfReaders, byte ssPins[]) {
     this->numberOfReaders = numberOfReaders;
     this->ssPins = ssPins;
-    this->mfrc522 = new MFRC522[this->numberOfReaders];
+    
+    this->lastTag = new uchar*[numberOfReaders];
+    for (uint8_t reader = 0; reader < numberOfReaders; reader++) {
+        this->lastTag[reader] = new uchar[8];
+    } 
+
+    this->lastRead = new long[numberOfReaders];
+    memset(lastRead, 0, sizeof lastRead); 
 }
 
 void RfidHandler::begin() {
-    SPI.begin();   
-
     for (uint8_t reader = 0; reader < numberOfReaders; reader++) {
-        mfrc522[reader].PCD_Init(ssPins[reader], rstPin);
-        Serial.print(F("Reader "));
-        Serial.print(reader);
-        Serial.print(F(": "));
-        mfrc522[reader].PCD_DumpVersionToSerial();
+        pinMode(ssPins[reader], INPUT);
+        digitalWrite(ssPins[reader], HIGH);
     }
 }
 
@@ -35,19 +24,52 @@ bool RfidHandler::readAll(Pair<String, String> &result) {
     boolean hasResult = false;
 
     for (uint8_t reader = 0; reader < numberOfReaders; reader++) {
-        if (mfrc522[reader].PICC_IsNewCardPresent() && mfrc522[reader].PICC_ReadCardSerial()) {  
-            result.first = (String) ssPins[reader];
-            result.second = bytesToString(mfrc522[reader].uid.uidByte, mfrc522[reader].uid.size);
-
-            mfrc522[reader].PICC_HaltA();
-            mfrc522[reader].PCD_StopCrypto1();
-            hasResult = true;
-        } 
+        return checkRFID(reader, result);
     } 
 
     return hasResult;
 }
 
-RfidHandler::~RfidHandler() {
-    delete[] mfrc522;
+boolean RfidHandler::checkRFID(int reader, Pair<String, String> &result) {
+  rfid.begin(7, 13, 12, ssPins[reader], 10, 9);
+  
+  uchar status;
+  uchar str[MAX_LEN];
+  uchar serialNumber[5];
+  
+  rfid.init(); 
+  
+  status = rfid.request(PICC_REQIDL, str);
+  if (status == MI_OK) {
+    status = rfid.anticoll(str);
+    if (status == MI_OK) {
+      memcpy(serialNumber, str, 5);
+      uchar returnId[8];
+      rfid.getCardID(returnId, 8, serialNumber);
+
+      if (!compareTags(returnId, lastTag[reader])) {
+        memcpy(lastTag[reader], returnId, 8);
+        returnId[8] = '\0';
+
+        String content = String((char*)returnId);
+        content.toUpperCase();
+        
+        result.first = (String) ssPins[reader];
+        result.second = content;
+
+        return true;
+      }
+      lastRead[reader] = millis();
+    }
+    
+    rfid.halt(); 
+  } else if (millis() - lastRead[reader] > 1000) {
+    memset(lastTag[reader], 0, sizeof lastTag[reader]);
+  }
+
+  return false;
+}
+
+bool RfidHandler::compareTags(uchar* tag1, uchar* tag2) {
+    return strncmp((char*)tag1, (char*)tag2, 8) == 0;
 }
