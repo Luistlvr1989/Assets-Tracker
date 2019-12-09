@@ -24,7 +24,10 @@ bool RfidHandler::readAll(Pair<String, String> &result) {
     boolean hasResult = false;
 
     for (uint8_t reader = 0; reader < numberOfReaders; reader++) {
-        return checkRFID(reader, result);
+        if (checkRFID(reader, result)) {
+            hasResult = true;
+            break;
+        }
     } 
 
     return hasResult;

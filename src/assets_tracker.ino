@@ -5,15 +5,15 @@
   
 #define BZZ_PIN 4
 
-#define NUMBER_OF_RFID 1  
-byte ssPins[] = {8};
+#define NUMBER_OF_RFID 3
+byte ssPins[] = {6, 8, 11};
 
 RfidHandler rfids(NUMBER_OF_RFID, ssPins);
 
-#define NUMBER_OF_PRESENCE 2
-byte pPins[] = {0, 7};
+#define NUMBER_OF_PRESENCE 3
+byte pPins[] = {3, 4, 7};
 
-PCF8574Handler presence(0x38, NUMBER_OF_PRESENCE, pPins);
+PCF8574Handler presence(0x20, NUMBER_OF_PRESENCE, pPins);
 
 WIEGAND wg;
 
@@ -48,6 +48,7 @@ void loop() {
     }
     
     if (wg.available()) {
+        tone(BZZ_PIN, 1000, 1000);
         String code = String(wg.getCode(), HEX);
         StaticJsonDocument<256> doc = buildJson("employee", "code", code);
         sendJson(doc);
